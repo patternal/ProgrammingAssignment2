@@ -1,5 +1,5 @@
 ## Implementation of a caching wrapper for matrix inversion
-##
+
 ## Matrix inversion is an expensive operation under general conditions;
 ## caching the result can boost performance of composite algorithms
 ## when the same inverse is needed a sufficient number of times.
@@ -7,7 +7,13 @@
 ##   http://en.wikipedia.org/wiki/Memoization,
 ## which itself is a specific type of wrapper or decorator pattern:
 ##   http://en.wikipedia.org/wiki/Decorator_pattern.
-##
+
+## A typical lifecycle might be:
+##   x <- matrix(...)
+##   m <- makeCacheMatrix(x)
+##   y <- cacheSolve(m)
+## ...or any sequence of operations with the above three lines interspersed
+## `randomly' (stochastically, perhaps), but which serves a useful purpose.
 
 ## makeCacheMatrix returns a list of accessor & functions
 
@@ -55,7 +61,7 @@ makeCacheMatrix <- function(x = matrix()) {
 
 cacheSolve <- function(x, ...) {
     ## Return the inverse of matrix x (assumed invertible)
-    inv <- x$getmean()
+    inv <- x$getinv()
     if(!is.null(inv)) {
         message("returning cached inverse")
         return(inv)
@@ -63,6 +69,6 @@ cacheSolve <- function(x, ...) {
     message("calculating & caching inverse")
     data <- x$get()
     inv <- solve(data, ...)
-    x$setmean(inv)
+    x$setinv(inv)
     inv
 }
