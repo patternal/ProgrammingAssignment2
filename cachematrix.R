@@ -28,10 +28,18 @@ makeCacheMatrix <- function(x = matrix()) {
     # this replaces the initial x value passed in and re-initalizes
     # inv to NULL (hopefully only if necessary, if I get productive).
     set <- function(y) {
-        # the cached inverse must be reset to NULL iff x is redefined (differently)
-        # TODO: test whether this works for 2nd, 3rd, ... redefinitions
-        #       ...or whether it can be modified to work using get()...
-        #inv <<- if (x == y) {inv} else {NULL}
+        # The cached inverse must be reset to NULL iff x is redefined (differently).
+        # This potential optimization must, however, rely on a tolerance/threshold/
+        # epsilon/radius, or lower limiting value, to determine if y is sufficiently close
+        # to the previous matrix x; below, we use the L2 matrix norm with a hard-
+        # coded threshold of 10^(-15); if we were willing to store an `eps' internally,
+        # we would probably do best to calculate it in setinv below as indicated there.
+        #
+        # This optimized version resets inv only if y has changed `enough':
+        #inv <<- if (is.matrix(x) &&  is.matrix(x)
+        #            && nrow(x) == nrow(y)
+        #            && ncol(x) == ncol(y)
+        #            && norm(x-y) < 1e-15) {inv} else {NULL}
         inv <<- NULL
         # re-define x
         x <<- y
@@ -44,6 +52,21 @@ makeCacheMatrix <- function(x = matrix()) {
     # setinv() must be called by the function that actually does the heavy lifting.
     setinv <- function(z) inv <<- z
     getinv <- function() inv
+
+    # Here is a potential optimization to go with the one above,
+    # with an internal `eps'; a more rigorous approach would surely take
+    # into account not only the limiting error in doubles, but also the
+    # condition number of x and/or its inverse.
+    # But as a first approach, we use here an estimate of the machine error
+    # in the representation of x & its inverse, as calculated from the
+    # Euclidean L2 norm of the difference of x*inv with the identity matrix
+    # (in practice, a suitable multiple of this might need to be chosen).
+    # This would replace the simpler setinv above.
+    #
+    #setinv <- function(z) {
+    #  eps <<-norm(diag(nrow(x))-x*inv,'2')
+    #  inv <<- z
+    #}
 
     # Return the four accessor functions that comprise this wrapper (this
     # makes them `public' functions, i.e. named elements visible with `$').
